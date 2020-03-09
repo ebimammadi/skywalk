@@ -3,23 +3,23 @@ import Polygon from "./polygon";
 const polygon = new Polygon();
 /**
  * Class representing a simulator
- * A Point is a point consisting x and y
- * //typedef {Object} Point has x_position,y_position,direction
- * //typedef {Object} Direction
- * @typedef {Object} Point
- * @property {Number}  x
- * @property {Number}  y
- * @property {String}  direction
  *
  * @typeof {Object} Coordinates
- * @property {Number}  x
- * @property {Number}  y
+ *
+ * //typedef {Object} Point has coordinates,direction
+ * @typedef {Object} Point
+ * @property {Coordinates} coordinates
+ * @property {String}  direction
+ *
+
  */
 class Simulator {
     constructor() {
         this.point = {
-            x: 1,
-            y: 1,
+            coordinates: {
+                x: 1,
+                y: 1
+            },
             direction: 'north'
         };
 
@@ -62,7 +62,8 @@ class Simulator {
      * @param {Point} point is an object of Point
      */
     initiatePoint(point){
-        this.point = point
+        this.point.coordinates = point.coordinates;
+        this.point.direction = ((point.direction === undefined) || (point.direction===''))?"north":point.direction;
     }
 
     /**
@@ -87,40 +88,48 @@ class Simulator {
      * This is a function which simulate the motion of the object based on the current position of the object,
      * and commands received from
      * @param {Array.<Number>} commands is the array of the commands
+     * @return {Object} returns coordinates and message and success or fail color
      */
     simulateMotion(commands){
         const polygon = new Polygon();
-
-        commands.forEach(command => {
-            //if(isNaN(command)) throw 'invalid command';
+        if (!polygon.isPointInside(this.point.coordinates, this.polygon.vertices))
+            return {
+                message: 'Start Point is not inside the shape!',
+                messageColor:'red',
+                coordinates: this.point.coordinates
+            };
+        for (let command of commands) {
             let newPoint = this.applyCommand( command);
-
-            if (!polygon.isPointInside(newPoint, this.polygon.vertices))
-            {
-                console.log(this.point)
-                console.log('error!');//break;
-                return;
-            }
-            //console.log(this.applyCommand( command ) )
-            //check point in polygon!!!!
-        })
-        console.log(this.point)
-
+            if (!polygon.isPointInside(newPoint.coordinates, this.polygon.vertices))
+                return {
+                    message: 'Point fell outside the shape! check console.log',
+                    messageColor:'red',
+                    coordinates: newPoint.coordinates
+                }
+        }
+        return {
+            message: 'Point is inside the shape.',
+            messageColor:'green',
+            coordinates: this.point.coordinates
+        }
     }
 
+    /**
+     * This functions validates the command query
+     * @param {String} commandQuery is a string
+     * @return {Object} which has two properties, one is validate which is true or false, the other is message
+     */
     commandQueryValidate(commandQuery){
         if (commandQuery.trim()==="") return { message : 'Command query is empty', validate : false };
         if (commandQuery.slice(-1)[0]!=='0') return { message : 'Commands should end with 0', validate : false };
         const commands = commandQuery.split(',');
         if (commands.length<2) return { message : 'Commands query is not valid', validate : false };
-        //if (command_series.slice(-1)!=='0') console.log(`The command string is not valid: `,`[-1,-1]`)
         for (let i=0; i<commands.length; i++){
             let command = commands[i];
             if (!this.isInt(command))
                 return { message : 'Commands query is not valid', validate : false };
             command = parseInt(command);
             if (command>4||command<0) return { message : 'Command query is not valid, unacceptable command', validate : false };
-            //if ( (i<commands.length-1) &&(command===0)) return { message : '0 should be the last command', validate : false };
         }
         return {validate: true}
     }
@@ -146,7 +155,7 @@ class Simulator {
      * @return {Coordinates}
      */
     applyCommand(command){
-        //console.log(`([${this.point.x},${this.point.y}],${this.point.direction})=>(${command})`);
+        console.log(`([${this.point.coordinates.x},${this.point.coordinates.y}],${this.point.direction})=>(${command})`);
         switch (command) {
             case 1: this.applyMotion(1); break;
             case 2: this.applyRotation(180);
@@ -155,9 +164,9 @@ class Simulator {
                     break;
             case 3: this.applyRotation(90);break;
             case 4: this.applyRotation(-90);break;
-            case 0:default: return this.quit();break;
+            case 0:default: break;
         }
-        return { x: this.point.x, y: this.point.y }
+        return this.point
     }
 
     /**
@@ -167,8 +176,8 @@ class Simulator {
      * NOTE: this function is not handling
      */
     quit(){
-        if (polygon.isPointInside(this.point,this.polygon.vertices))
-            return { x : this.point.x, y : this.point.y } ;
+        if (polygon.isPointInside(this.point.coordinates,this.polygon.vertices))
+            return { x : this.point.coordinates.x, y : this.point.coordinates.y } ;
         return {x: -1 ,y: -1};
     }
 
@@ -189,10 +198,10 @@ class Simulator {
      * @param {Integer} step is an integer specifying the step
      */
     applyDirectionChanges(direction, step){
-        if (direction.x_change === '+' ) this.point.x += step;
-        if (direction.x_change === '-' ) this.point.x -= step;
-        if (direction.y_change === '+' ) this.point.y += step;
-        if (direction.y_change === '-' ) this.point.y -= step;
+        if (direction.x_change === '+' ) this.point.coordinates.x += step;
+        if (direction.x_change === '-' ) this.point.coordinates.x -= step;
+        if (direction.y_change === '+' ) this.point.coordinates.y += step;
+        if (direction.y_change === '-' ) this.point.coordinates.y -= step;
     }
 
     /**
