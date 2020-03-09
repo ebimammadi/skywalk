@@ -102,7 +102,7 @@ class Simulator {
             let newPoint = this.applyCommand( command);
             if (!polygon.isPointInside(newPoint.coordinates, this.polygon.vertices))
                 return {
-                    message: 'Point fell outside the shape! check console.log',
+                    message: 'Point fell outside the shape! check console logs.',
                     messageColor:'red',
                     coordinates: newPoint.coordinates
                 }
